@@ -17,8 +17,9 @@
     <link href="../css/styles.css" rel="stylesheet">
 
     <style>
-        #question>ul>li:hover {
+        #question>ol>li:hover {
             background-color: gray;
+            cursor: pointer;
         }
     </style>
 </head>
@@ -90,7 +91,7 @@
 
             <div class="row">
                 <div class="col-md-12">
-                    <!-- <button id="generateQuestion()">Next</button> -->
+                    <p id="score">Score: 0</p>
                 </div>
             </div>
 
@@ -134,9 +135,9 @@
 
         let skyrimMainAntagonist = new Question(
             "What is the main antagonist of Skyrim?",
-            ["Vivec", "Ulfric Stormcloak", "Mehrunes Dagon", "Tiberius"],
-            "Ulfric Stormcloak",
-            "Ulfric Stormcloak is a central figure in The Elder Scrolls V: Skyrim. He is the Jarl of Windhelm and leader of the Stormcloak rebellion, which opposes the Imperial Legion and the Thalmor in a bid for Skyrim's independence."
+            ["Vivec", "Ulfric Stormcloak", "Mehrunes Dagon", "Alduin"],
+            "Alduin",
+            "The main antagonist of The Elder Scrolls V: Skyrim is Alduin, also known as the World-Eater. Alduin is a dragon and the firstborn of Akatosh, the chief deity of the Elder Scrolls universe. He is prophesied to bring about the end of the world by consuming it."
         );
 
         let dawnguard = new Question(
@@ -165,6 +166,8 @@
 
         let score = 0;
         let maxScore = questionsForQuiz.length;
+        let scoreEle = document.getElementById("score");
+
 
         function generateQuestion() {
 
@@ -194,31 +197,32 @@
                     let clickedAnswer = e.srcElement.innerText;
 
                     if (clickedAnswer == question.correctAnswer) {
-                        score++;
-                        e.srcElement.style.backgroundColor = "green";
+                        // e.srcElement.style.backgroundColor = "green"; //window.alert is blocking so won't update the element's background
+                        updateScore();
                         window.alert("Correct! " + question.flavorText);
                     }
                     else {
-                        e.srcElement.style.backgroundColor = "red";
+                        // e.srcElement.style.backgroundColor = "red";
                         window.alert("Wrong! The correct answer is: " + question.correctAnswer);
                     }
 
                     //remove question from so it isn't asked again
-                    questionsForQuiz.splice(random, 1);
+                    questionsForQuiz.splice(random, 1); //splice removes an element at (index, 1) - 1 is the amount of elements to remove.
                     generateQuestion();
                 })
 
                 answersUlEle.appendChild(answersLiEle);
             }
 
-
             questionDiv.appendChild(questionNameEle);
             questionDiv.appendChild(answersUlEle);
-
-
         }
 
 
+        function updateScore() {
+            score++;
+            scoreEle.textContent = "Score: " + score;
+        }
 
 
         generateQuestion();
