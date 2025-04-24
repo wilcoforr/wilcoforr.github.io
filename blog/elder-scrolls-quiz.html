@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="wilcoforr's home GitHub site">
+    <meta name="author" content="wilcoforr">
+
+    <title>wilcoforr - </title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+
+    <link rel="icon" href="../images/favicon.ico">
+
+    <link href="../css/styles.css" rel="stylesheet">
+
+    <style>
+        #question>ul>li:hover {
+            background-color: gray;
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="collapse bg-dark" id="navbarHeader">
+            <div class="container">
+                <div class="row">
+                    <div class="col-sm-8 col-md-7 py-4">
+                        <h4 class="text-white">wilcoforr</h4>
+                        <p class="text-muted">Full stack .NET software developer.</p>
+                    </div>
+                    <div class="col-sm-4 offset-md-1 py-4">
+                        <h4 class="text-white">More Info</h4>
+                        <ul class="list-unstyled">
+                            <li><a href="https://wilcoforr.github.io/" class="text-white">Home</a></li>
+                            <li><a href="https://wilcoforr.github.io/blog/blog.html" class="text-white">Blog</a></li>
+                            <li><a href="https://www.github.com/wilcoforr/" class="text-white">My GitHub</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="navbar navbar-dark bg-dark shadow-sm">
+            <div class="container">
+                <a href="https://wilcoforr.github.io/" class="navbar-brand d-flex align-items-center">
+                    <strong>wilcoforr</strong>
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarHeader"
+                    aria-controls="navbarHeader" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="container body-content">
+
+            <div class="row">
+                <div class="col-md-12">
+                    <h1>Elder Scrolls Quiz</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <p>The Elder Scrolls is a legendary series of action role-playing games developed by Bethesda Game
+                        Studios. Known for its expansive open worlds and rich lore, the series has captivated gamers
+                        since its debut in 1994 with The Elder Scrolls: Arena. The latest buzz is about the remastered
+                        version of The Elder Scrolls IV: Oblivion, which was released on April 22, 20252. This remaster
+                        modernizes the 2006 classic with stunning visuals, refined gameplay, and new features like
+                        improved lighting, atmospheric effects, and seamless switching between first- and third-person
+                        perspectives3.</p>
+                    <p>
+                        The series includes iconic titles like Morrowind, Skyrim, and Oblivion, each offering unique
+                        adventures in the fictional continent of Tamriel</p>
+
+                    </p>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <div id="question"></div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-12">
+                    <!-- <button id="generateQuestion()">Next</button> -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="pt-5 my-5 text-muted border-top text-center">
+        wilcoforr &middot; &copy; <span id="lastModified"></span>
+    </footer>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+        crossorigin="anonymous"></script>
+    <script src="../js/script.js"></script>
+
+    <script>
+ 
+        class Question {
+            constructor(questionText, answers, correctAnswer, flavorText) {
+                this.questionText = questionText;
+                this.answers = answers;
+                this.correctAnswer = correctAnswer;
+                this.flavorText = flavorText;
+            }
+        }
+
+        let firstESGame = new Question(
+            "What is the name of the First Elder Scrolls Game?",
+            ["Arena", "Daggerfall", "Morrowind", "Oblivion"],
+            "Arena",
+            "Elder Scrolls: Arena is the first installment in the iconic Elder Scrolls series, released by Bethesda Softworks in 1994."
+        ); 
+        let oblivionMainAntagonist = new Question(
+            "What is the main antagonist of Oblivion?",
+            ["Ulfric Stormcloak", "Uriel Septim", "Vivec", "Mehrunes Dagon"],
+            "Mehrunes Dagon",
+            "Mehrunes Dagon is the Daedric Prince of Destruction, Revolution, and Ambition. He rules over the Oblivion realm of the Deadlands and is a definitive enemy of Mundus as a whole."
+        );
+
+        let skyrimMainAntagonist = new Question(
+            "What is the main antagonist of Skyrim?",
+            ["Vivec", "Ulfric Stormcloak", "Mehrunes Dagon", "Tiberius"],
+            "Ulfric Stormcloak",
+            "Ulfric Stormcloak is a central figure in The Elder Scrolls V: Skyrim. He is the Jarl of Windhelm and leader of the Stormcloak rebellion, which opposes the Imperial Legion and the Thalmor in a bid for Skyrim's independence."
+        );
+
+        let dawnguard = new Question(
+            "What is the purpose of the Dawnguard?",
+            ["Hunting vampires", "Hunting werewolves", "Hunting dragons", "Hunting daedra"],
+            "Hunting vampires",
+            "The Dawnguard is a faction in The Elder Scrolls V: Skyrim, introduced in the Dawnguard DLC. Their primary purpose is to hunt and combat vampires, particularly a powerful group known as the Volkihar Clan. The Dawnguard operates out of Fort Dawnguard, led by Isran, and recruits members to help in their mission to protect Skyrim from the growing vampire threat."
+        );
+
+
+        let horseArmorDLC = new Question(
+            "Was Nights of the Nine the first DLC for Oblivion?",
+            ["Yes", "No"],
+            "No",
+            "The first DLC for The Elder Scrolls IV: Oblivion was \"Horse Armor Pack\" released in April 2006. It was a small add-on that allowed players to purchase armor for their horses in the game. While it received mixed reactions—some criticized it for offering minimal content—it also became quite iconic as an early example of downloadable content in gaming history."
+        );
+
+
+        let questionsForQuiz = [];
+        questionsForQuiz.push(firstESGame);
+        questionsForQuiz.push(oblivionMainAntagonist);
+        questionsForQuiz.push(skyrimMainAntagonist);
+        questionsForQuiz.push(dawnguard);
+        questionsForQuiz.push(horseArmorDLC);
+
+
+        let score = 0;
+        let maxScore = questionsForQuiz.length;
+
+        function generateQuestion() {
+
+            if (questionsForQuiz.length == 0) {
+                window.alert("You scored " + score + " out of " + maxScore);
+                return;
+            }
+
+            //get a random question
+            let random = Math.floor(Math.random() * questionsForQuiz.length);
+            let question = questionsForQuiz[random]; 
+
+            let questionDiv = document.getElementById("question");
+            questionDiv.innerHTML = "";
+
+            let questionNameEle = document.createElement("p");
+            questionNameEle.innerText = question.questionText;
+
+            let answersUlEle = document.createElement("ol");
+
+            //create the possible answer nodes
+            for (let i = 0; i < question.answers.length; i++) {
+                let answersLiEle = document.createElement("li");
+                answersLiEle.innerText = question.answers[i];
+
+                answersLiEle.addEventListener("click", (e) => {
+                    let clickedAnswer = e.srcElement.innerText;
+
+                    if (clickedAnswer == question.correctAnswer) {
+                        score++;
+                        e.srcElement.style.backgroundColor = "green";
+                        window.alert("Correct! " + question.flavorText);
+                    }
+                    else {
+                        e.srcElement.style.backgroundColor = "red";
+                        window.alert("Wrong! The correct answer is: " + question.correctAnswer);
+                    }
+
+                    //remove question from so it isn't asked again
+                    questionsForQuiz.splice(random, 1);
+                    generateQuestion();
+                })
+
+                answersUlEle.appendChild(answersLiEle);
+            }
+
+
+            questionDiv.appendChild(questionNameEle);
+            questionDiv.appendChild(answersUlEle);
+
+
+        }
+
+
+
+
+        generateQuestion();
+
+    </script>
+
+</body>
+
+</html>
