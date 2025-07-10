@@ -15,14 +15,18 @@
     <link rel="icon" href="../images/favicon.ico">
 
     <link href="../css/styles.css" rel="stylesheet">
-    <link ref="https://cdn.datatables.net/1.12.0/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/2.3.2/css/dataTables.dataTables.min.css" rel="stylesheet" />
+    <link ref="https://cdn.datatables.net/2.3.2/css/dataTables.bootstrap5.css" rel="stylesheet">
+
     <style>
         .uncommon {
             color: silver;
         }
+
         .rare {
             color: orange;
         }
+
         .mythic {
             color: orangered;
         }
@@ -75,10 +79,10 @@
                         MTG JSON
                     </h1>
                     <p>
-                        Using the JavaScript `fetch` API and &lt;template&gt; to generate a table of Magic the Gathering
-                        Cards from https://mtgjson.com/downloads/all-sets/, Innistrad: Remastered expansion.
+                        Using some of the latest JavaScript features to generate a table of Magic the Gathering
+                        Cards from MTG JSON (https://mtgjson.com/downloads/all-sets/), Innistrad: Remastered expansion.
                     </p>
-                    <p>Note: Loading may take some time...</p>
+                    <p>Tech used: <a href="https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch">Fetch API</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function">Async</a>, <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Template_literals">Template Literals/strings</a>, and <a href="https://datatables.net/">DataTables</a>.</p>
                     <hr>
                     <table id="cards" class="table table-striped">
                         <thead>
@@ -120,9 +124,11 @@
             crossorigin="anonymous"></script>
     <script src="../js/script.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.5.1.js"></script>
-    <script src="https://cdn.datatables.net/1.12.0/js/jquery.dataTables.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.js"></script>
     <script src="https://cdn.datatables.net/1.12.0/js/dataTables.bootstrap5.min.js"></script>
+
+    <script src="https://cdn.datatables.net/2.3.2/js/dataTables.min.js"></script>
+
     <script>
 
         if (!("content" in document.createElement("template"))) {
@@ -140,18 +146,25 @@
             const cards = vowResJson.data.cards;
             const template = document.getElementById("cardRow");
 
+            // Track unique card names
+            const seenNames = new Set();
+
             for (let i = 0; i < cards.length; i++) {
 
                 const card = cards[i];
 
+                // Skip if we've already seen this card name
+                if (seenNames.has(card.name)) continue;
+                seenNames.add(card.name);
+
                 let tcgPlayerIdentifier = cards[i].identifiers.tcgplayerProductId;
-                let tcgplayerImageUrl = "https://tcgplayer-cdn.tcgplayer.com/product/" + tcgPlayerIdentifier + "_in_1000x1000.jpg";
+                let tcgplayerImageUrl = `https://tcgplayer-cdn.tcgplayer.com/product/${tcgPlayerIdentifier}_in_1000x1000.jpg`;
 
                 // Use template literals for building image HTML
                 let imageSrcBuilderHTML = "";
 
                 if (tcgPlayerIdentifier == undefined) {
-                    imageSrcBuilderHTML = "<span>-</span>";
+                    imageSrcBuilderHTML = `<span title='Image not found (${tcgplayerImageUrl})'>-</span>`;
                 }
                 else {
                     imageSrcBuilderHTML = `<a href="${tcgplayerImageUrl}"><img class="img" src="${tcgplayerImageUrl}" height="250"></a>`
@@ -160,27 +173,26 @@
                 const cardRowClone = template.content.cloneNode(true);
                 const tds = cardRowClone.querySelectorAll("td");
 
-                tds[0].textContent = card.name;
+                tds[0].innerHTML = `<strong>${card.name}</strong>`;
                 tds[1].innerHTML = imageSrcBuilderHTML;
 
-                let powerToughnessText = card.type;
+                let typeAndPowerToughnessText = card.type;
                 if (card.type.startsWith("Creature")) {
-                    powerToughnessText += " [" + card.power + "/" + card.toughness + "]";
+                    typeAndPowerToughnessText += " [" + card.power + "/" + card.toughness + "]";
                 }
-                tds[2].textContent = powerToughnessText;
+                tds[2].textContent = typeAndPowerToughnessText;
 
                 tds[3].textContent = card.text;
                 tds[4].textContent = card.flavorText;
 
                 tds[5].innerHTML = `<span class="${card.rarity}">${card.rarity}</span>`;;
 
-
+                // add the row containing the card info to the table body
                 document.getElementById("cardsTableBody").appendChild(cardRowClone);
             }
 
-            $(document).ready(function () {
-                $("#cards").DataTable();
-            });
+            //DataTable init
+            let cardTable = new DataTable("#cards");
         })();
     </script>
 </body>
