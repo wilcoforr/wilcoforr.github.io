@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>Budget Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background: #f7f7f7;
+        }
+
+        .container {
+            background: #fff;
+            padding: 24px;
+            border-radius: 8px;
+            max-width: 600px;
+            margin: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2,
+        h3 {
+            text-align: center;
+        }
+
+        label {
+            display: block;
+            margin-top: 16px;
+            margin-bottom: 4px;
+        }
+
+        input,
+        select,
+        button {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        .item-list {
+            margin-top: 24px;
+        }
+
+        .item-list table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .item-list th,
+        .item-list td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+
+        .add-item-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .add-item-row input {
+            flex: 1;
+        }
+
+        .add-item-row button {
+            flex: 1;
+        }
+
+        .sum-row {
+            background: #f0f0f0;
+            font-weight: bold;
+        }
+
+        .date-header-row td {
+            background: #e9e9ff;
+            font-weight: bold;
+            border-bottom: 1px solid #ccc;
+        }
+
+        .delete-btn {
+            width: auto;
+            padding: 4px 10px;
+            background: #e74c3c;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .delete-btn:hover {
+            background: #c0392b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Spendwise</h2>
+        <h3>Track your expenses quickly, in the browser, without any apps</h3>
+        <div>
+
+            <div style="margin-bottom:12px;">
+                <button id="openAddItemModalBtn" type="button" style="width:100%; padding:8px; border-radius:4px; border:1px solid #ccc; background:#4a90e2; color:#fff; cursor:pointer;">Add Item</button>
+            </div>
+    <!-- Add Item Modal -->
+    <div id="addItemModal" style="display:none; position:fixed; top:0; left:0; width:100vw; height:100vh; background:rgba(0,0,0,0.3); z-index:1000; align-items:center; justify-content:center;">
+        <div style="background:#fff; padding:32px 24px; border-radius:8px; box-shadow:0 2px 12px rgba(0,0,0,0.2); max-width:320px; margin:auto; position:relative;">
+            <h3 style="margin-top:0;">Add New Item</h3>
+            <input type="text" id="modalNewItemInput" placeholder="Enter new item name" style="width:100%; padding:8px; margin-bottom:16px; border-radius:4px; border:1px solid #ccc;" />
+            <div style="display:flex; gap:8px;">
+                <button id="modalAddItemBtn" type="button" style="flex:1; background:#4a90e2; color:#fff; border:none; border-radius:4px; padding:8px; cursor:pointer;">Add</button>
+                <button id="modalCancelBtn" type="button" style="flex:1; background:#888; color:#fff; border:none; border-radius:4px; padding:8px; cursor:pointer;">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+            <label for="itemSelect">Item Name</label>
+            <select id="itemSelect"></select>
+        </div>
+
+        <!-- Item management section -->
+        <div id="itemManageSection">
+            <label>Manage Item Names</label>
+            <ul id="itemList" style="list-style:none; padding-left:0; margin-bottom:12px;"></ul>
+        </div>
+        <div>
+            <label for="amountInput">Amount</label>
+            <input type="number" id="amountInput" min="0" step="0.01" placeholder="Enter amount" />
+        </div>
+        <div>
+            <label for="dateInput">Date</label>
+            <input type="date" id="dateInput" />
+        </div>
+        <button id="addExpenseBtn" type="button">Add Expense</button>
+        <div class="item-list">
+            <h3>Expenses</h3>
+            <table id="expensesTable">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Amount</th>
+                        <!--<th>Date</th>-->
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Expenses will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+
+        <div style="text-align:center; margin-top:32px;">
+            <button id="deleteAllBtn" type="button"
+                style="background:#e74c3c; color:#fff; padding:10px 24px; border:none; border-radius:6px; font-size:1rem; cursor:pointer;">Delete
+                All Data</button>
+        </div>
+
+    </div>
+    <script>
+
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('dateInput').value = today;
+
+        // LocalStorage keys
+        const ITEMS_KEY = 'budget_items';
+        const EXPENSES_KEY = 'budget_expenses';
+
+        // DOM elements
+        const itemSelect = document.getElementById('itemSelect');
+        const newItemInput = document.getElementById('newItemInput');
+        const addItemBtn = document.getElementById('addItemBtn');
+        const amountInput = document.getElementById('amountInput');
+        const dateInput = document.getElementById('dateInput');
+        const addExpenseBtn = document.getElementById('addExpenseBtn');
+        const expensesTableBody = document.querySelector('#expensesTable tbody');
+
+        // Load items from localStorage
+        function loadItems() {
+            const items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+            itemSelect.innerHTML = '';
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item;
+                option.textContent = item;
+                itemSelect.appendChild(option);
+            });
+
+            // Render item management list
+            const itemList = document.getElementById('itemList');
+            itemList.innerHTML = '';
+            items.forEach(item => {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.alignItems = 'center';
+                li.style.marginBottom = '4px';
+                li.innerHTML = `
+                        <span style="flex:1;">${item}</span>
+                        <button class="delete-item-btn" data-item="${encodeURIComponent(item)}" style="width:auto; padding:2px 8px; background:#888; color:#fff; border:none; border-radius:4px; cursor:pointer; margin-left:8px;">Delete</button>
+                    `;
+                itemList.appendChild(li);
+            });
+
+            // Attach delete event listeners for items
+            document.querySelectorAll('.delete-item-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const itemToDelete = decodeURIComponent(this.getAttribute('data-item'));
+                    deleteItem(itemToDelete);
+                });
+            });
+        }
+        // Delete item from localStorage and dropdown (expenses remain)
+        function deleteItem(itemName) {
+            if (!confirm(`Delete item "${itemName}" from the list? This will not affect existing expenses.`)) return;
+            let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+            items = items.filter(i => i !== itemName);
+            localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+            loadItems();
+        }
+
+        // Modal logic for adding item
+        const addItemModal = document.getElementById('addItemModal');
+        const openAddItemModalBtn = document.getElementById('openAddItemModalBtn');
+        const modalNewItemInput = document.getElementById('modalNewItemInput');
+        const modalAddItemBtn = document.getElementById('modalAddItemBtn');
+        const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+        openAddItemModalBtn.addEventListener('click', () => {
+            addItemModal.style.display = 'flex';
+            modalNewItemInput.value = '';
+            setTimeout(() => modalNewItemInput.focus(), 100);
+        });
+
+        modalCancelBtn.addEventListener('click', () => {
+            addItemModal.style.display = 'none';
+        });
+
+        modalAddItemBtn.addEventListener('click', () => {
+            const newItem = modalNewItemInput.value.trim();
+            if (!newItem) return;
+            let items = JSON.parse(localStorage.getItem(ITEMS_KEY)) || [];
+            if (!items.includes(newItem)) {
+                items.push(newItem);
+                localStorage.setItem(ITEMS_KEY, JSON.stringify(items));
+                loadItems();
+                itemSelect.value = newItem;
+            }
+            addItemModal.style.display = 'none';
+        });
+
+        // Allow Enter key to submit in modal
+        modalNewItemInput.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                modalAddItemBtn.click();
+            }
+        });
+
+        // Delete expense by index
+        function deleteExpense(index) {
+            if (!confirm('Are you sure you want to delete this expense?')) return;
+            const expenses = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || [];
+            expenses.splice(index, 1);
+            localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+            loadExpenses();
+        }
+
+        // Group expenses by date and render with sum row and delete button
+        function loadExpenses() {
+            const expenses = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || [];
+            expensesTableBody.innerHTML = '';
+
+            // Group by date
+            const grouped = {};
+            expenses.forEach((exp, idx) => {
+                if (!grouped[exp.date]) grouped[exp.date] = [];
+                grouped[exp.date].push({ ...exp, _idx: idx });
+            });
+
+            // Sort dates descending
+            const dates = Object.keys(grouped).sort((a, b) => b.localeCompare(a));
+
+            dates.forEach(date => {
+                // Date header row
+                const dateHeader = document.createElement('tr');
+                dateHeader.className = 'date-header-row';
+                dateHeader.innerHTML = `<td colspan="4">${date}</td>`;
+                expensesTableBody.appendChild(dateHeader);
+
+                let daySum = 0;
+                grouped[date].forEach(exp => {
+                    daySum += parseFloat(exp.amount);
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                                <td>${exp.item}</td>
+                                <td>$${parseFloat(exp.amount).toFixed(2)}</td>
+                                <td><button class="delete-btn" data-idx="${exp._idx}">Delete</button></td>
+                            `;
+                    //<td>${exp.date}</td>
+                    expensesTableBody.appendChild(tr);
+                });
+
+                // Sum row
+                const sumRow = document.createElement('tr');
+                sumRow.className = 'sum-row';
+                sumRow.innerHTML = `
+                            <td colspan="1">Total</td>
+                            <td colspan="3">$${daySum.toFixed(2)}</td>
+                        `;
+                expensesTableBody.appendChild(sumRow);
+            });
+
+            // Attach delete event listeners
+            document.querySelectorAll('.delete-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const idx = parseInt(this.getAttribute('data-idx'));
+                    deleteExpense(idx);
+                });
+            });
+        }
+
+        // Add expense to localStorage
+        addExpenseBtn.addEventListener('click', () => {
+            const item = itemSelect.value;
+            const amount = amountInput.value;
+            const date = dateInput.value;
+            if (!item || !amount || !date) return;
+            const expenses = JSON.parse(localStorage.getItem(EXPENSES_KEY)) || [];
+            expenses.push({ item, amount, date });
+            localStorage.setItem(EXPENSES_KEY, JSON.stringify(expenses));
+            loadExpenses();
+            amountInput.value = '';
+            dateInput.value = today;
+        });
+
+        // Initial load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadItems();
+            loadExpenses();
+            // Delete all data button
+            document.getElementById('deleteAllBtn').addEventListener('click', function () {
+                if (confirm('Are you sure you want to delete all data? This cannot be undone.')) {
+                    if (confirm('Please confirm again to delete ALL data.')) {
+                        localStorage.clear();
+                        loadItems();
+                        loadExpenses();
+                    }
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
