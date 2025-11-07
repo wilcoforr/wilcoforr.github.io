@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleship Game</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        #grid {
+            display: grid;
+            grid-template-columns: repeat(10, 40px);
+            grid-template-rows: repeat(10, 40px);
+            gap: 2px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .cell {
+            width: 40px;
+            height: 40px;
+            background-color: lightblue;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+            .cell.hit {
+                background-color: red;
+            }
+
+            .cell.miss {
+                background-color: white;
+            }
+
+            .cell.sunk {
+                background-color: gold;
+                box-shadow: 0 0 10px 2px orange;
+                border: 2px solid #b8860b;
+            }
+
+        .game-over .cell {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+
+        @keyframes shake {
+            0%, 100% {
+                transform: translateX(0);
+            }
+
+            25% {
+                transform: translateX(-10px);
+            }
+
+            50% {
+                transform: translateX(10px);
+            }
+
+            75% {
+                transform: translateX(-10px);
+            }
+        }
+
+        .shake {
+            animation: shake 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="container py-4">
+        <h1 class="text-center mb-4">Battleship Game</h1>
+        <div class="row justify-content-center mb-3">
+            <div class="col-auto">
+                <div class="card shadow-sm">
+                    <div class="card-body p-2">
+                        <div id="stats" class="d-flex justify-content-between fw-bold">
+                            <span id="hits">Hits: 0</span>
+                            <span id="misses">Misses: 0</span>
+                            <span id="sunk">Ships Sunk: 0/3</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-auto align-self-center">
+                <button id="restart" class="btn btn-primary ms-3">Restart</button>
+            </div>
+        </div>
+        <div class="row justify-content-center">
+            <div class="col-auto">
+                <div id="grid" class="border rounded shadow bg-white p-2"></div>
+            </div>
+        </div>
+        <div class="row justify-content-center mt-3">
+            <div class="col-auto">
+                <p id="message" class="lead"></p>
+            </div>
+        </div>
+    </div>
+    <script>
+        const grid = document.getElementById('grid');
+        const message = document.getElementById('message');
+        const hitsSpan = document.getElementById('hits');
+        const missesSpan = document.getElementById('misses');
+        const sunkSpan = document.getElementById('sunk');
+        const restartBtn = document.getElementById('restart');
+        const gridSize = 10;
+        const totalShips = 3;
+        let ships = [];
+        let hits = 0;
+        let misses = 0;
+        let sunkShips = 0;
+        let clickedCells = new Set();
+
+        function createGrid() {
+            grid.innerHTML = '';
+            for (let i = 0; i < gridSize * gridSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                grid.appendChild(cell);
+            }
+        }
+
+        function generateShips() {
+            ships = [];
+            while (ships.length < totalShips) {
+                let shipLength = Math.floor(Math.random() * 3 + 2);
+
+                let orientation = Math.random() < 0.5 ? 'horizontal' : 'vertical';
+                let startRow = Math.floor(Math.random() * gridSize);
+                let startCol = Math.floor(Math.random() * gridSize);
+                let newShip = [];
+                for (let i = 0; i < shipLength; i++) {
+                    let row = orientation === 'horizontal' ? startRow : startRow + i;
+                    let col = orientation === 'horizontal' ? startCol + i : startCol;
+                    if (row >= gridSize || col >= gridSize) break;
+                    newShip.push(row * gridSize + col);
+                }
+                if (
+                    newShip.length === shipLength &&
+                    !newShip.some(index => ships.flat().includes(index))
+                ) {
+                    ships.push(newShip);
+                }
+            }
+        }
+
+        function updateStats() {
+            hitsSpan.textContent = `Hits: ${hits}`;
+            missesSpan.textContent = `Misses: ${misses}`;
+            sunkSpan.textContent = `Ships Sunk: ${sunkShips}/${totalShips}`;
+        }
+
+        function checkSunkShips() {
+            sunkShips = ships.filter(ship => ship.every(idx => clickedCells.has(idx))).length;
+            ships.forEach(ship => {
+                if (ship.every(idx => clickedCells.has(idx))) {
+                    ship.forEach(idx => {
+                        grid.children[idx].classList.add('sunk');
+                    });
+                }
+            });
+        }
+
+        function handleCellClick(event) {
+            if (event.target.classList.contains('cell')) {
+                const index = parseInt(event.target.dataset.index);
+                if (clickedCells.has(index)) {
+                    message.textContent = 'Already clicked!';
+                    return;
+                }
+                clickedCells.add(index);
+                const hit = ships.some(ship => ship.includes(index));
+                if (hit) {
+                    event.target.classList.add('hit');
+                    message.textContent = 'Hit!';
+                    hits++;
+                    grid.classList.add('shake');
+                    setTimeout(() => {
+                        grid.classList.remove('shake');
+                    }, 500);
+                } else {
+                    event.target.classList.add('miss');
+                    message.textContent = 'Miss!';
+                    misses++;
+                }
+                checkSunkShips();
+                updateStats();
+                if (sunkShips === ships.length) {
+                    message.textContent = 'Game Over! All ships sunk!';
+                    grid.classList.add('game-over');
+                }
+            }
+        }
+
+        function resetGame() {
+            hits = 0;
+            misses = 0;
+            sunkShips = 0;
+            clickedCells.clear();
+            grid.classList.remove('game-over');
+            message.textContent = '';
+            createGrid();
+            generateShips();
+            updateStats();
+        }
+
+        grid.addEventListener('click', handleCellClick);
+        restartBtn.addEventListener('click', resetGame);
+
+        // Initial setup
+        createGrid();
+        generateShips();
+        updateStats();
+    </script>
+</body>
+</html>
