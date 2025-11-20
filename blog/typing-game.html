@@ -1,0 +1,334 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="">
+    <meta name="keywords" content="">
+    <meta name="author" content="">
+    <title>Typing Game - Skyrim Edition</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+
+    <link rel="stylesheet"  href="style.css">
+</head>
+
+<style>
+    body {
+    background-color: #eeeeee;
+}
+.correct {
+    background: #d4edda;
+    border: 2px solid #28a745;
+}
+#quote {
+    font-weight: bold;
+    font-size: 1.2rem;
+    line-height: 2;
+}
+.error {
+    background: #f8d7da;
+    border: 2px solid #dc3545;
+}
+#typing-area {
+    font-size: 18px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+#message {
+    color: green;
+}
+.shake {
+  animation: shake 0.3s;
+}
+
+@keyframes shake {
+  0% { transform: translateX(0); }
+  20% { transform: translateX(-5px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+  100% { transform: translateX(0); }
+}
+
+.highlight {
+    background-color: #fff3cd;
+    color: #000;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-weight: bold;
+    border: 2px solid #ffc107;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.completed {
+    color: #28a745;
+    text-decoration: line-through;
+    opacity: 0.6;
+}
+</style>
+
+<body>
+    <div class="container d-flex flex-column align-items-center min-vh-100 justify-content-center">
+        <header class="border-bottom w-100 text-center mb-4">
+            <h1>Typing Game</h1>
+            <h2>Skyrim Edition</h2>
+        </header>
+
+        <main class="w-100 text-center">
+            <div class="row my-3 justify-content-center">
+                <div class="col-auto">
+                </div>
+            </div>
+            <div class="col-12">
+                <p class="text-center">Practice your typing skills with a quote from Skyrim. Click <strong><span style="color:rgb(13, 110, 253)">Start</span></strong> to begin!</p>
+                <p id="quote" class="text-center"></p>
+                <!-- Progress bar -->
+                <div class="progress mb-3" style="height: 24px;">
+                  <div id="progress-bar" class="progress-bar bg-info" role="progressbar" style="width: 0%;" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <p id="message" class="text-center"></p>
+                <div class="d-flex flex-column align-items-center gap-2">
+                    <input type="text" aria-label="current word" id="typed-value" class="text-center" />
+                    <div class="d-flex gap-2 justify-content-center">
+                        <button type="button" class="btn btn-primary" id="start">Start</button>
+                        <button type="button" class="btn btn-secondary" id="restart">Restart</button>
+                    </div>
+                    <div>
+                        <span class="badge bg-primary me-2">Time: <span id="timer">0</span>s</span>
+                        <span class="badge bg-success">Score: <span id="score">0</span></span>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center text-muted border-top w-100 mt-4">
+            2025 wilcoforr
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+        crossorigin="anonymous"></script>
+
+    <script >
+        const quotes = [
+    "I used to be an adventurer like you, then I took an arrow in the knee.",
+    "Let me guess... someone stole your sweetroll?",
+    "Hey. You. You are finally awake.",
+    "You have committed crimes against Skyrim and her people. What say you in your defense?",
+    "Never should have come here!",
+    "Skyrim belongs to the Nords!",
+    "I am sworn to carry your burdens.",
+    "Cheese for everyone!",
+    "You know, for a mortal, you're awfully mortal.",
+    "Do you get to the Cloud District very often? Oh, what am I saying, of course you don't.",
+    "Fus Ro Dah!",
+    "By the Nine Divines, what have you done?",
+    "May your road lead you to warm sands.",
+    "The snow falls heavy on the mountains, friend. You'd best get to shelter before nightfall.",
+    "A Nord's weapon is his honor, and honor is not so easily regained once lost.",
+    "In the end, we are all just stories.",
+    "No lollygaggin'.",
+    "My cousin's out fighting dragons, and what do I get? Guard duty.",
+    "Some may call this junk. Me, I call them treasures.",
+    "Wait... I know you.",
+    "Khajiit has wares, if you have coin.",
+    "I'd be a lot warmer and a lot happier with a bellyful of mead.",
+    "Watch the skies, traveler.",
+    "What is it? Dragons?",
+    "By Azura, by Azura, by Azura! It's the Grand Champion!",
+    "Disrespect the law, and you disrespect me.",
+    "Everything's for sale, my friend. If I had a sister, I'd sell her in a second.",
+    "What's the matter? Can't stand the sight of a strong Nord woman?",
+    "Psst. Hey, I know you. Hail Sithis!",
+    "Go cast your fancy magic someplace else."
+];
+
+let words = [];
+let wordIndex = 0;
+let wordCount = 0;
+let score = 0;
+let timerInterval = null;
+let startTime = 0;
+let currentSentence = 0;
+let totalSentences = 3;
+let selectedQuotes = [];
+
+const quoteElement = document.getElementById("quote");
+const messageElement = document.getElementById("message");
+const typedValueElement = document.getElementById("typed-value");
+const timerElement = document.getElementById("timer");
+const scoreElement = document.getElementById("score");
+const progressBar = document.getElementById("progress-bar");
+
+function updateProgressBar() {
+    if (wordCount === 0) {
+        progressBar.style.width = "0%";
+        progressBar.setAttribute("aria-valuenow", "0");
+        return;
+    }
+    const percent = Math.round((wordIndex / wordCount) * 100);
+    progressBar.style.width = percent + "%";
+    progressBar.setAttribute("aria-valuenow", percent);
+}
+
+function highlightCurrentWord() {
+    let html = '';
+    for (let i = 0; i < words.length; i++) {
+        if (i < wordIndex) {
+            // Completed words
+            html += `<span class="completed">${words[i]}</span> `;
+        } else if (i === wordIndex) {
+            // Current word to type
+            html += `<span class="highlight">${words[i]}</span> `;
+        } else {
+            // Upcoming words
+            html += `${words[i]} `;
+        }
+    }
+    quoteElement.innerHTML = html.trim();
+}
+
+function startTimer() {
+    startTime = Date.now();
+    timerElement.textContent = "0";
+    timerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        timerElement.textContent = elapsed;
+    }, 100);
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+}
+
+function resetGame() {
+    score = 0;
+    scoreElement.textContent = score;
+    timerElement.textContent = "0";
+    stopTimer();
+    progressBar.style.width = "0%";
+    progressBar.setAttribute("aria-valuenow", "0");
+    currentSentence = 0;
+    selectedQuotes = [];
+}
+
+function selectRandomQuotes() {
+    const shuffled = [...quotes].sort(() => Math.random() - 0.5);
+    return shuffled.slice(0, totalSentences);
+}
+
+function loadNextSentence() {
+    if (currentSentence >= selectedQuotes.length) {
+        // All sentences completed
+        stopTimer();
+        const elapsedTime = (Date.now() - startTime) / 1000;
+        const totalWords = selectedQuotes.reduce((sum, q) => sum + q.split(" ").length, 0);
+        const wpm = totalWords / (elapsedTime / 60);
+        const message = `?? Game Complete! You finished ${totalSentences} sentences (${totalWords} words) in ${elapsedTime.toFixed(2)} seconds for ${wpm.toFixed(1)} WPM.`;
+        messageElement.innerText = message;
+        typedValueElement.disabled = true;
+        return;
+    }
+
+    const quote = selectedQuotes[currentSentence];
+    words = quote.split(" ");
+    wordIndex = 0;
+    wordCount = words.length;
+    highlightCurrentWord();
+    typedValueElement.value = "";
+    typedValueElement.focus();
+    updateProgressBar();
+}
+
+document.getElementById("start").addEventListener("click", () => {
+    resetGame();
+    selectedQuotes = selectRandomQuotes();
+    currentSentence = 0;
+    score = 0;
+    scoreElement.textContent = score;
+    messageElement.innerText = "";
+    typedValueElement.value = "";
+    typedValueElement.disabled = true;
+
+    // Countdown logic
+    let countdown = 3;
+    messageElement.innerText = `Starting in ${countdown}... (${totalSentences} sentences to complete)`;
+    const countdownInterval = setInterval(() => {
+        countdown--;
+        if (countdown > 0) {
+            messageElement.innerText = `Starting in ${countdown}... (${totalSentences} sentences to complete)`;
+        } else {
+            clearInterval(countdownInterval);
+            messageElement.innerText = `Sentence ${currentSentence + 1} of ${totalSentences}`;
+            typedValueElement.disabled = false;
+            loadNextSentence();
+            startTimer();
+        }
+    }, 1000);
+});
+
+document.getElementById("restart").addEventListener("click", () => {
+    resetGame();
+    quoteElement.innerHTML = "";
+    messageElement.innerText = "";
+    typedValueElement.value = "";
+});
+
+typedValueElement.addEventListener("input", () => {
+    const currentWord = words[wordIndex];
+    const typedValue = typedValueElement.value;
+
+    if (typedValue === currentWord && wordIndex === words.length - 1) {
+        // Completed current sentence
+        score++;
+        scoreElement.textContent = score;
+        wordIndex++;
+        updateProgressBar();
+        highlightCurrentWord();
+        currentSentence++;
+        
+        if (currentSentence < totalSentences) {
+            messageElement.innerText = `? Sentence complete! Moving to sentence ${currentSentence + 1} of ${totalSentences}...`;
+            typedValueElement.disabled = true;
+            setTimeout(() => {
+                messageElement.innerText = `Sentence ${currentSentence + 1} of ${totalSentences}`;
+                typedValueElement.disabled = false;
+                loadNextSentence();
+            }, 1000);
+        } else {
+            loadNextSentence(); // This will trigger game complete
+        }
+    } 
+    else if (typedValue.endsWith(" ") && typedValue.trim() === currentWord) {
+        typedValueElement.value = "";
+        wordIndex++;
+        score++;
+        scoreElement.textContent = score;
+        typedValueElement.className = "correct";
+        setTimeout(() => {
+            typedValueElement.className = "";
+        }, 150);
+        updateProgressBar();
+        highlightCurrentWord();
+    }
+    else if (currentWord && currentWord.startsWith(typedValue)) {
+        typedValueElement.className = "";
+    }
+    else {
+        typedValueElement.className = "error shake";
+        setTimeout(() => {
+            typedValueElement.classList.remove("shake");
+        }, 300);
+    }
+});
+    </script>
+
+
+</body>
+
+</html>
