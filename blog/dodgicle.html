@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dodgicle - Dodge the Icicles</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        #game-canvas {
+            display: block;
+            background: linear-gradient(180deg, #87CEEB 0%, #E0F6FF 100%);
+            border: 4px solid #333;
+            margin-bottom: 20px;
+            touch-action: none;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        #hud {
+            display: flex;
+            justify-content: space-between;
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 10px;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+        }
+
+        .hud-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .score-value {
+            color: #FFD700;
+            font-size: 32px;
+        }
+
+        .hp-value {
+            color: #FF4444;
+            font-size: 32px;
+        }
+
+        .hp-icon {
+            font-size: 28px;
+        }
+
+        #message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 40px 60px;
+            border-radius: 20px;
+            text-align: center;
+            font-size: 36px;
+            font-weight: bold;
+            z-index: 100;
+            display: none;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.8);
+            animation: popIn 0.4s ease-out;
+        }
+
+        #message.victory {
+            color: #00FF00;
+            animation: victoryPulse 0.6s ease-out;
+        }
+
+        #message.game-over {
+            color: #FF4444;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.5);
+                opacity: 0;
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        @keyframes victoryPulse {
+            0% {
+                transform: translate(-50%, -50%) scale(0.8);
+                opacity: 0;
+            }
+            50% {
+                transform: translate(-50%, -50%) scale(1.1);
+            }
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
+        #message button {
+            display: block;
+            margin-top: 30px;
+            padding: 15px 40px;
+            font-size: 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        #message button:hover {
+            background: #764ba2;
+        }
+
+        #instructions {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .instruction-item {
+            margin: 8px 0;
+        }
+
+        .controls {
+            color: #FFD700;
+        }
+
+        @media (max-width: 600px) {
+            #hud {
+                font-size: 18px;
+            }
+
+            .score-value,
+            .hp-value {
+                font-size: 24px;
+            }
+
+            #message {
+                font-size: 28px;
+                padding: 30px 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="instructions">
+            <div class="instruction-item">
+                <span class="controls">⌨ Keyboard:</span> A/D or ← → to move
+            </div>
+            <div class="instruction-item">
+                <span class="controls">📱 Touch:</span> Tap left/right side of screen to move
+            </div>
+            <div class="instruction-item">
+                <span class="controls">🎯 Objective:</span> Dodge icicles, score 20 points to win!
+            </div>
+        </div>
+
+        <canvas id="game-canvas" width="800" height="600"></canvas>
+
+        <div id="hud">
+            <div class="hud-item">
+                <span>Score:</span>
+                <span class="score-value" id="score-display">0</span>
+            </div>
+            <div class="hud-item">
+                <span class="hp-icon">❤</span>
+                <span class="hp-value" id="hp-display">3</span>
+            </div>
+        </div>
+    </div>
+
+    <div id="message"></div>
+
+    <script>
+        // ============================================
+        // GAME CONFIGURATION
+        // ============================================
+        const CONFIG = {
+            canvas: document.getElementById('game-canvas'),
+            canvasWidth: 800,
+            canvasHeight: 600,
+            playerSpeed: 6,
+            playerWidth: 50,
+            playerHeight: 60,
+            startHp: 3,
+            winScore: 20,
+            initialSpawnInterval: 1500,
+            minSpawnInterval: 400,
+            initialFallSpeed: 2,
+            maxFallSpeed: 8,
+            minIcicleWidth: 20,
+            maxIcicleWidth: 60,
+            minIcicleHeight: 40,
+            maxIcicleHeight: 120,
+        };
+
+        // ============================================
+        // GAME STATE
+        // ============================================
+        let gameState = {
+            isRunning: true,
+            isPaused: false,
+            isGameOver: false,
+            isVictory: false,
+            score: 0,
+            hp: CONFIG.startHp,
+            elapsed: 0,
+            lastTime: 0,
+        };
+
+        // ============================================
+        // PLAYER OBJECT
+        // ============================================
+        const player = {
+            x: CONFIG.canvasWidth / 2 - CONFIG.playerWidth / 2,
+            y: CONFIG.canvasHeight - CONFIG.playerHeight - 10,
+            width: CONFIG.playerWidth,
+            height: CONFIG.playerHeight,
+            speed: CONFIG.playerSpeed,
+            velocityX: 0,
+            invulnerableTimer: 0,
+            isInvulnerable: false,
+
+            update() {
+                // Apply velocity
+                this.x += this.velocityX;
+
+                // Clamp to canvas bounds
+                this.x = Math.max(0, Math.min(this.x, CONFIG.canvasWidth - this.width));
+
+                // Update invulnerability timer
+                if (this.invulnerableTimer > 0) {
+                    this.invulnerableTimer -= 16;
+                } else {
+                    this.isInvulnerable = false;
+                }
+            },
+
+            render(ctx) {
+                // Flash effect when invulnerable
+                if (this.isInvulnerable && Math.floor(this.invulnerableTimer / 100) % 2 === 0) {
+                    ctx.globalAlpha = 0.3;
+                }
+
+                // Draw player as a square with a color
+                ctx.fillStyle = '#4CAF50';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+
+                // Draw eyes
+                ctx.fillStyle = '#000';
+                ctx.fillRect(this.x + 10, this.y + 15, 8, 8);
+                ctx.fillRect(this.x + 32, this.y + 15, 8, 8);
+
+                ctx.globalAlpha = 1;
+            },
+
+            activateInvulnerability() {
+                this.isInvulnerable = true;
+                this.invulnerableTimer = 1000; // 1 second
+            },
+
+            moveLeft() {
+                this.velocityX = -this.speed; // note the - (negative)
+            },
+
+            moveRight() {
+                this.velocityX = this.speed;
+            },
+
+            stopMovement() {
+                this.velocityX = 0;
+            },
+        };
+
+        // ============================================
+        // ICICLE OBJECT
+        // ============================================
+        class Icicle {
+            constructor(x, y, width, height, speed) {
+                this.x = x;
+                this.y = y;
+                this.width = width;
+                this.height = height;
+                this.speed = speed;
+            }
+
+            update() {
+                this.y += this.speed;
+            }
+
+            render(ctx) {
+                // Draw icicle as a triangle
+                ctx.fillStyle = '#00BFFF';
+                ctx.strokeStyle = '#0099CC';
+                ctx.lineWidth = 2;
+
+                // Main body (triangle pointing down)
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width / 2, this.y); // Top point
+                ctx.lineTo(this.x, this.y + this.height); // Bottom left
+                ctx.lineTo(this.x + this.width, this.y + this.height); // Bottom right
+                ctx.closePath();
+                ctx.fill();
+                ctx.stroke();
+
+                // Highlight
+                ctx.strokeStyle = '#00FFFF';
+                ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(this.x + this.width / 2, this.y);
+                ctx.lineTo(this.x + this.width * 0.25, this.y + this.height * 0.7);
+                ctx.stroke();
+            }
+
+            isOffScreen() {
+                return this.y > CONFIG.canvasHeight + this.height;
+            }
+
+            collidesWith(other) {
+                return (
+                    this.x < other.x + other.width &&
+                    this.x + this.width > other.x &&
+                    this.y < other.y + other.height &&
+                    this.y + this.height > other.y
+                );
+            }
+        }
+
+        // ============================================
+        // GAME LOGIC
+        // ============================================
+        let icicles = [];
+        let spawnTimer = CONFIG.initialSpawnInterval;
+        let lastSpawnTime = 0;
+        let difficulty = 1;
+
+        function updateDifficulty() {
+            // Increase difficulty over time
+            difficulty = 1 + gameState.elapsed / 30000; // Scales over 30 seconds
+            return difficulty;
+        }
+
+        function spawnIcicle() {
+            const width = CONFIG.minIcicleWidth + Math.random() * (CONFIG.maxIcicleWidth - CONFIG.minIcicleWidth);
+            const height = CONFIG.minIcicleHeight + Math.random() * (CONFIG.maxIcicleHeight - CONFIG.minIcicleHeight);
+            const x = Math.random() * (CONFIG.canvasWidth - width);
+            const y = -height;
+
+            // Adjust speed based on difficulty
+            const baseSpeed = CONFIG.initialFallSpeed + (difficulty - 1) * 2;
+            const speed = Math.min(baseSpeed, CONFIG.maxFallSpeed);
+
+            icicles.push(new Icicle(x, y, width, height, speed));
+        }
+
+        function update(deltaTime) {
+            if (!gameState.isRunning) return;
+
+            gameState.elapsed += deltaTime;
+
+            // Update difficulty
+            updateDifficulty();
+
+            // Update player
+            player.update();
+
+            // Spawn icicles
+            const spawnInterval = Math.max(CONFIG.minSpawnInterval, CONFIG.initialSpawnInterval / difficulty);
+            if (gameState.elapsed - lastSpawnTime > spawnInterval) {
+                spawnIcicle();
+                lastSpawnTime = gameState.elapsed;
+            }
+
+            // Update and check icicles
+            for (let i = icicles.length - 1; i >= 0; i--) {
+                icicles[i].update();
+
+                // Check if icicle passed the floor (score point)
+                if (icicles[i].isOffScreen()) {
+                    gameState.score++;
+                    icicles.splice(i, 1);
+
+                    // Check win condition
+                    if (gameState.score >= CONFIG.winScore) {
+                        endGame(true);
+                    }
+                    continue;
+                }
+
+                // Check collision with player
+                if (!player.isInvulnerable && icicles[i].collidesWith(player)) {
+                    gameState.hp--;
+                    player.activateInvulnerability();
+                    icicles.splice(i, 1);
+
+                    // Check lose condition
+                    if (gameState.hp <= 0) {
+                        endGame(false);
+                    }
+                }
+            }
+        }
+
+        function render() {
+            const ctx = CONFIG.canvas.getContext('2d');
+
+            // Clear canvas
+            ctx.fillStyle = 'rgba(135, 206, 235, 1)';
+            ctx.fillRect(0, 0, CONFIG.canvasWidth, CONFIG.canvasHeight);
+
+            // Draw ground
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, CONFIG.canvasHeight - 20, CONFIG.canvasWidth, 20);
+            ctx.strokeStyle = '#00BFFF';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(0, CONFIG.canvasHeight - 20, CONFIG.canvasWidth, 20);
+
+            // Render icicles
+            icicles.forEach(icicle => icicle.render(ctx));
+
+            // Render player
+            player.render(ctx);
+
+            // Update HUD
+            document.getElementById('score-display').textContent = gameState.score;
+            document.getElementById('hp-display').textContent = gameState.hp;
+        }
+
+        function gameLoop(currentTime) {
+            if (gameState.lastTime === 0) {
+                gameState.lastTime = currentTime;
+            }
+
+            const deltaTime = currentTime - gameState.lastTime;
+            gameState.lastTime = currentTime;
+
+            if (gameState.isRunning) {
+                update(deltaTime);
+            }
+
+            render();
+
+            if (gameState.isRunning) {
+                requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function endGame(isVictory) {
+            gameState.isRunning = false;
+            gameState.isVictory = isVictory;
+            gameState.isGameOver = true;
+
+            const messageEl = document.getElementById('message');
+            if (isVictory) {
+                messageEl.textContent = '🎉 VICTORY! 🎉\nYou dodged 20 icicles!';
+                messageEl.classList.add('victory');
+                messageEl.classList.remove('game-over');
+            } else {
+                messageEl.textContent = '❌ GAME OVER ❌\nYou took too much damage!';
+                messageEl.classList.add('game-over');
+                messageEl.classList.remove('victory');
+            }
+
+            messageEl.innerHTML += '<button onclick="location.reload()">Play Again</button>';
+            messageEl.style.display = 'block';
+        }
+
+        // ============================================
+        // INPUT HANDLING
+        // ============================================
+        const keys = {};
+
+        document.addEventListener('keydown', (e) => {
+            keys[e.key.toLowerCase()] = true;
+
+            if (keys['a'] || keys['arrowleft']) {
+                player.moveLeft();
+            } else if (keys['d'] || keys['arrowright']) {
+                player.moveRight();
+            }
+        });
+
+        document.addEventListener('keyup', (e) => {
+            keys[e.key.toLowerCase()] = false;
+
+            // Stop movement if neither key is pressed
+            if (!(keys['a'] || keys['arrowleft'] || keys['d'] || keys['arrowright'])) {
+                player.stopMovement();
+            }
+        });
+
+        // Touch controls
+        CONFIG.canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = CONFIG.canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+
+            if (touchX < CONFIG.canvasWidth / 2) {
+                player.moveLeft();
+            } else {
+                player.moveRight();
+            }
+        });
+
+        CONFIG.canvas.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            player.stopMovement();
+        });
+
+        CONFIG.canvas.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            const touch = e.touches[0];
+            const rect = CONFIG.canvas.getBoundingClientRect();
+            const touchX = touch.clientX - rect.left;
+
+            if (touchX < CONFIG.canvasWidth / 2) {
+                player.moveLeft();
+            } else {
+                player.moveRight();
+            }
+        });
+
+        // Click/tap controls for mouse
+        CONFIG.canvas.addEventListener('mousemove', (e) => {
+            const rect = CONFIG.canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+
+            if (mouseX < CONFIG.canvasWidth / 2) {
+                if (player.velocityX <= 0) {
+                    player.moveLeft();
+                }
+            } else {
+                if (player.velocityX >= 0) {
+                    player.moveRight();
+                }
+            }
+        });
+
+        CONFIG.canvas.addEventListener('mouseleave', () => {
+            player.stopMovement();
+        });
+
+        // ============================================
+        // START GAME
+        // ============================================
+        requestAnimationFrame(gameLoop);
+    </script>
+</body>
+</html>
