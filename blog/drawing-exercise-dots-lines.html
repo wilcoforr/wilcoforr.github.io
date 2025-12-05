@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Random Points Printable App</title>
+  <style>
+    /* Ensure page prints correctly on US Letter */
+    @page {
+      size: 8.5in 11in;
+      margin: 0.5in;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    canvas {
+      border: 1px solid #333;
+      display: block;
+      margin: 0 auto;
+    }
+    .instructions {
+      margin-top: 15px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <p>Random Points with Labels</p>
+  <canvas id="pointCanvas" width="700" height="900"></canvas>
+  <div class="instructions">
+    <p>This page generates 10 random labeled points. Use your browser’s print option to print on Letter size paper.</p>
+  </div>
+
+  <script>
+    function drawPoints() {
+      const canvas = document.getElementById('pointCanvas');
+      const ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      for (let i = 1; i <= 10; i++) {
+        const x = Math.floor(Math.random() * (canvas.width - 40)) + 20;
+        const y = Math.floor(Math.random() * (canvas.height - 40)) + 20;
+
+        // Draw point
+        ctx.beginPath();
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+        ctx.fillStyle = 'blue';
+        ctx.fill();
+
+        // Label point
+        ctx.fillStyle = 'black';
+        ctx.font = '14px Arial';
+        ctx.fillText('P' + i, x + 10, y - 10);
+      }
+    }
+
+    window.onload = drawPoints;
+  </script>
+</body>
+</html>
